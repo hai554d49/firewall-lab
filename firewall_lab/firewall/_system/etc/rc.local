@@ -1,0 +1,23 @@
+#!/bin/bash
+sysctl -w net.ipv4.ip_forward=1
+iptables -F
+iptables -t nat -F
+
+iptables -P FORWARD DROP
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Port Forwarding
+iptables -t nat -A PREROUTING -i eth2 -p tcp --dport 80 -j DNAT --to-destination 192.168.20.10:80
+iptables -A FORWARD -i eth2 -o eth0 -p tcp -d 192.168.20.10 --dport 80 -j ACCEPT
+
+iptables -t nat -A PREROUTING -i eth2 -p tcp --dport 2222 -j DNAT --to-destination 192.168.20.10:22
+iptables -A FORWARD -i eth2 -o eth0 -p tcp -d 192.168.20.10 --dport 22 -j ACCEPT
+
+# Mở kết nối DMZ sang LAN
+iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT
+
+exit 0
+
+
